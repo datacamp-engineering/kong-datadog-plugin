@@ -28,41 +28,30 @@ local get_consumer_id = {
   end
 }
 
-local function with_new_tag(tags_or_nil, new_tag)
-  local tags = {}
-  if tags_or_nil ~= nil then
-    for _, v in pairs(tags_or_nil) do
-      table.insert(tags, v)
+local function append(table_or_nil, new_element)
+  local new_table = {}
+  if table_or_nil ~= nil then
+    for _, v in pairs(table_or_nil) do
+      table.insert(new_table, v)
     end
   end
 
-  table.insert(tags, new_tag)
-  return tags
+  table.insert(new_table, new_element)
+  return new_table
 end
 
-local function increment_status(fmt, status, metric_config, logger)
-  if metric_config.status_in_tags then
-    local tags = with_new_tag(
-      metric_config.tags,
-      string_format("%s:%s", "status", status)
-    )
-    logger:send_statsd(
-      fmt, 1, logger.stat_types.counter, metric_config.sample_rate, tags
-    )
-
-  else
-    logger:send_statsd(
-      string_format("%s.%s", fmt, status), 1, logger.stat_types.counter,
-      metric_config.sample_rate, metric_config.tags
-    )
-  end
+local function increment_status(fmt, status, tags, sample_rate, logger)
+  local tags = append(tags, string_format("%s:%s", "status", status))
+  logger:send_statsd(
+    fmt, 1, logger.stat_types.counter, sample_rate, tags
+  )
 end
 
 local metrics = {
   status_count = function (api_name, message, metric_config, logger)
     local fmt = string_format("%s.request.status", api_name)
 
-    increment_status(fmt, message.response.status, metric_config, logger)
+    increment_status(fmt, message.response.status, metric_config.tags, metric_config.sample_rate, logger)
 
     logger:send_statsd(string_format("%s.%s", fmt, "total"), 1,
                        logger.stat_types.counter,
@@ -97,7 +86,7 @@ local metrics = {
     if consumer_id then
       local fmt = string_format("%s.user.%s.request.status", api_name, consumer_id)
 
-      increment_status(fmt, message.response.status, metric_config, logger)
+      increment_status(fmt, message.response.status, metric_config.tags, metric_config.sample_rate, logger)
 
       logger:send_statsd(string_format("%s.%s", fmt,  "total"),
                          1, logger.stat_types.counter,
