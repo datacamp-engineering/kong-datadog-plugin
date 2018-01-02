@@ -39,3 +39,10 @@ cd /kong-plugin
 ### Releasing
 
 Update version in rockspec and rockspec filename. Execute `luarocks upload _plugin_and_version.rockspec`.
+
+Push new docker image with new plugin version, e.g:
+
+```bash
+docker build -t salemove/kong:0.11-alpine-datadog-plugin-0.2.1 -f kong-salemove.Dockerfile .
+docker push salemove/kong:0.11-alpine-datadog-plugin-0.2.1
+```
