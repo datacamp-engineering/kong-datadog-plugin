@@ -33,6 +33,7 @@ describe("Plugin: datadog (log)", function()
     local api3     = assert(helpers.dao.apis:insert {
       name         = "dd3",
       hosts        = { "datadog3.com" },
+      uris         = { "/status/.*" },
       upstream_url = helpers.mock_upstream_url,
     })
     local api4     = assert(helpers.dao.apis:insert {
@@ -281,10 +282,10 @@ describe("Plugin: datadog (log)", function()
 
     local ok, gauges = thread:join()
     assert.True(ok)
-    assert.contains("kong.request.count:1|c|#T2:V2,T3:V3,T4,api_name:dd3", gauges)
-    assert.contains("kong.request.status:1|c|#T1:V1,api_name:dd3,status:200", gauges)
-    assert.contains("kong.request.status.total:1|c|#T1:V1,api_name:dd3", gauges)
-    assert.contains("kong.latency:%d+|g|#T2:V2:V3,T4,api_name:dd3", gauges, true)
+    assert.contains("kong.request.count:1|c|#T2:V2,T3:V3,T4,api_name:dd3,api_uris:/status/.*", gauges)
+    assert.contains("kong.request.status:1|c|#T1:V1,api_name:dd3,api_uris:/status/.*,status:200", gauges)
+    assert.contains("kong.request.status.total:1|c|#T1:V1,api_name:dd3,api_uris:/status/.*", gauges)
+    assert.contains("kong.latency:%d+|g|#T2:V2:V3,T4,api_name:dd3,api_uris:/status/.*", gauges, true)
   end)
 
   it("should not return a runtime error (regression)", function()

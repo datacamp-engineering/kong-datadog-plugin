@@ -133,6 +133,12 @@ local function log(premature, conf, message)
   end
 
   local request_tags = {string_format("%s:%s", "api_name", message.api.name)}
+  if message.api.uris ~= nil then
+    request_tags = append(
+      request_tags,
+      string_format("%s:%s", "api_uris", table.concat(message.api.uris, ","))
+    )
+  end
 
   for _, metric_config in pairs(conf.metrics) do
     local metric = metrics[metric_config.name]
