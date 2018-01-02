@@ -8,7 +8,7 @@ multiple APIs.
 
 ## Development
 
-Follow the guidelines in [kong-vagrant][https://github.com/Kong/kong-vagrant].
+Follow the guidelines in [kong-vagrant](https://github.com/Kong/kong-vagrant).
 Clone this repository into `kong-vagrant` directory with the name `kong-plugin`
 and run `vagrant up`.
 
