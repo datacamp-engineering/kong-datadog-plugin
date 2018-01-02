@@ -28,7 +28,7 @@ local get_consumer_id = {
   end
 }
 
-local function append(table_or_nil, new_element)
+local function safe_merge(table_or_nil, table_to_add)
   local new_table = {}
   if table_or_nil ~= nil then
     for _, v in pairs(table_or_nil) do
@@ -36,8 +36,17 @@ local function append(table_or_nil, new_element)
     end
   end
 
-  table.insert(new_table, new_element)
+  if table_to_add ~= nil then
+    for _, v in pairs(table_to_add) do
+      table.insert(new_table, v)
+    end
+  end
+
   return new_table
+end
+
+local function append(table_or_nil, new_element)
+  return safe_merge(table_or_nil, {new_element})
 end
 
 local function increment_status(fmt, status, tags, sample_rate, logger)
@@ -48,43 +57,42 @@ local function increment_status(fmt, status, tags, sample_rate, logger)
 end
 
 local metrics = {
-  status_count = function (api_name, message, metric_config, logger)
-    local fmt = string_format("%s.request.status", api_name)
-
+  status_count = function (message, metric_config, logger)
+    local fmt = "request.status"
     increment_status(fmt, message.response.status, metric_config.tags, metric_config.sample_rate, logger)
 
     logger:send_statsd(string_format("%s.%s", fmt, "total"), 1,
                        logger.stat_types.counter,
                        metric_config.sample_rate, metric_config.tags)
   end,
-  unique_users = function (api_name, message, metric_config, logger)
+  unique_users = function (message, metric_config, logger)
     local get_consumer_id = get_consumer_id[metric_config.consumer_identifier]
     local consumer_id     = get_consumer_id(message.consumer)
 
     if consumer_id then
-      local stat = string_format("%s.user.uniques", api_name)
+      local stat = "user.uniques"
 
       logger:send_statsd(stat, consumer_id, logger.stat_types.set,
                          nil, metric_config.tags)
     end
   end,
-  request_per_user = function (api_name, message, metric_config, logger)
+  request_per_user = function (message, metric_config, logger)
     local get_consumer_id = get_consumer_id[metric_config.consumer_identifier]
     local consumer_id     = get_consumer_id(message.consumer)
 
     if consumer_id then
-      local stat = string_format("%s.user.%s.request.count", api_name, consumer_id)
+      local stat = string_format("user.%s.request.count", consumer_id)
 
       logger:send_statsd(stat, 1, logger.stat_types.counter,
                          metric_config.sample_rate, metric_config.tags)
     end
   end,
-  status_count_per_user = function (api_name, message, metric_config, logger)
+  status_count_per_user = function (message, metric_config, logger)
     local get_consumer_id = get_consumer_id[metric_config.consumer_identifier]
     local consumer_id     = get_consumer_id(message.consumer)
 
     if consumer_id then
-      local fmt = string_format("%s.user.%s.request.status", api_name, consumer_id)
+      local fmt = string_format("user.%s.request.status", consumer_id)
 
       increment_status(fmt, message.response.status, metric_config.tags, metric_config.sample_rate, logger)
 
@@ -101,14 +109,13 @@ local function log(premature, conf, message)
     return
   end
 
-  local api_name   = string_gsub(message.api.name, "%.", "_")
   local stat_name  = {
-    request_size     = api_name .. ".request.size",
-    response_size    = api_name .. ".response.size",
-    latency          = api_name .. ".latency",
-    upstream_latency = api_name .. ".upstream_latency",
-    kong_latency     = api_name .. ".kong_latency",
-    request_count    = api_name .. ".request.count",
+    request_size     = "request.size",
+    response_size    = "response.size",
+    latency          = "latency",
+    upstream_latency = "upstream_latency",
+    kong_latency     = "kong_latency",
+    request_count    = "request.count",
   }
   local stat_value = {
     request_size     = message.request.size,
@@ -125,11 +132,14 @@ local function log(premature, conf, message)
     return
   end
 
+  local request_tags = {string_format("%s:%s", "api_name", message.api.name)}
+
   for _, metric_config in pairs(conf.metrics) do
     local metric = metrics[metric_config.name]
+    metric_config.tags = safe_merge(metric_config.tags, request_tags)
 
     if metric then
-      metric(api_name, message, metric_config, logger)
+      metric(message, metric_config, logger)
 
     else
       local stat_name  = stat_name[metric_config.name]
