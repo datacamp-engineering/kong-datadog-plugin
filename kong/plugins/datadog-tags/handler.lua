@@ -162,7 +162,7 @@ end
 
 
 function DatadogHandler:new()
-  DatadogHandler.super.new(self, "datadog")
+  DatadogHandler.super.new(self, "datadog-tags")
 end
 
 function DatadogHandler:log(conf)
