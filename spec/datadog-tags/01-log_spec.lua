@@ -40,17 +40,12 @@ describe("Plugin: datadog (log)", function()
       hosts        = { "datadog4.com" },
       upstream_url = helpers.mock_upstream_url,
     })
-    local api5     = assert(helpers.dao.apis:insert {
-      name         = "dd5",
-      hosts        = { "datadog5.com" },
-      upstream_url = helpers.mock_upstream_url,
-    })
     assert(helpers.dao.plugins:insert {
       name   = "key-auth",
       api_id = api4.id
     })
     assert(helpers.dao.plugins:insert {
-      name   = "datadog",
+      name   = "datadog-tags",
       api_id = api1.id,
       config = {
         host = "127.0.0.1",
@@ -58,7 +53,7 @@ describe("Plugin: datadog (log)", function()
       },
     })
     assert(helpers.dao.plugins:insert {
-      name   = "datadog",
+      name   = "datadog-tags",
       api_id = api2.id,
       config = {
         host    = "127.0.0.1",
@@ -78,7 +73,7 @@ describe("Plugin: datadog (log)", function()
       },
     })
     assert(helpers.dao.plugins:insert {
-      name   = "datadog",
+      name   = "datadog-tags",
       api_id = api3.id,
       config = {
         host    = "127.0.0.1",
@@ -106,29 +101,12 @@ describe("Plugin: datadog (log)", function()
       },
     })
     assert(helpers.dao.plugins:insert {
-      name   = "datadog",
+      name   = "datadog-tags",
       api_id = api4.id,
       config = {
         host   = "127.0.0.1",
         port   = 9999,
         prefix = "prefix",
-      },
-    })
-    assert(helpers.dao.plugins:insert {
-      name   = "datadog-tags",
-      api_id = api5.id,
-      config = {
-        host    = "127.0.0.1",
-        port    = 9999,
-        metrics = {
-          {
-            name        = "status_count",
-            stat_type   = "counter",
-            sample_rate = 1,
-            tags        = {"T1:V1"},
-            status_in_tags = true
-          }
-        },
       },
     })
 
@@ -176,7 +154,7 @@ describe("Plugin: datadog (log)", function()
     assert.contains("kong.dd1.request.count:1|c|#app:kong", gauges)
     assert.contains("kong.dd1.latency:%d+|ms|#app:kong", gauges, true)
     assert.contains("kong.dd1.request.size:%d+|ms|#app:kong", gauges, true)
-    assert.contains("kong.dd1.request.status.200:1|c|#app:kong", gauges)
+    assert.contains("kong.dd1.request.status:1|c|#app:kong,status:200", gauges)
     assert.contains("kong.dd1.request.status.total:1|c|#app:kong", gauges)
     assert.contains("kong.dd1.response.size:%d+|ms|#app:kong", gauges, true)
     assert.contains("kong.dd1.upstream_latency:%d+|ms|#app:kong", gauges, true)
@@ -185,7 +163,7 @@ describe("Plugin: datadog (log)", function()
     assert.contains("kong.dd1.user.*.request.count:1|c|#app:kong", gauges, true)
     assert.contains("kong.dd1.user.*.request.status.total:1|c|#app:kong",
                     gauges, true)
-    assert.contains("kong.dd1.user.*.request.status.200:1|c|#app:kong",
+    assert.contains("kong.dd1.user.*.request.status:1|c|#app:kong,status:200",
                     gauges, true)
   end)
 
@@ -223,7 +201,7 @@ describe("Plugin: datadog (log)", function()
     assert.contains("prefix.dd4.request.count:1|c|#app:kong",gauges)
     assert.contains("prefix.dd4.latency:%d+|ms|#app:kong", gauges, true)
     assert.contains("prefix.dd4.request.size:%d+|ms|#app:kong", gauges, true)
-    assert.contains("prefix.dd4.request.status.200:1|c|#app:kong", gauges)
+    assert.contains("prefix.dd4.request.status:1|c|#app:kong,status:200", gauges)
     assert.contains("prefix.dd4.request.status.total:1|c|#app:kong", gauges)
     assert.contains("prefix.dd4.response.size:%d+|ms|#app:kong", gauges, true)
     assert.contains("prefix.dd4.upstream_latency:%d+|ms|#app:kong", gauges, true)
@@ -233,7 +211,7 @@ describe("Plugin: datadog (log)", function()
                     gauges, true)
     assert.contains("prefix.dd4.user.*.request.status.total:1|c|#app:kong",
                     gauges, true)
-    assert.contains("prefix.dd4.user.*.request.status.200:1|c|#app:kong",
+    assert.contains("prefix.dd4.user.*.request.status:1|c|#app:kong,status:200",
                     gauges, true)
   end)
 
@@ -269,7 +247,7 @@ describe("Plugin: datadog (log)", function()
     assert.True(ok)
     assert.equal(3, #gauges)
     assert.contains("kong.dd2.request.count:1|c", gauges)
-    assert.contains("kong.dd2.request.status.200:1|c", gauges)
+    assert.contains("kong.dd2.request.status:1|c,status:200", gauges)
     assert.contains("kong.dd2.request.status.total:1|c", gauges)
   end)
 
@@ -304,44 +282,9 @@ describe("Plugin: datadog (log)", function()
     local ok, gauges = thread:join()
     assert.True(ok)
     assert.contains("kong.dd3.request.count:1|c|#T2:V2,T3:V3,T4", gauges)
-    assert.contains("kong.dd3.request.status.200:1|c|#T1:V1", gauges)
+    assert.contains("kong.dd3.request.status:1|c|#T1:V1,status:200", gauges)
     assert.contains("kong.dd3.request.status.total:1|c|#T1:V1", gauges)
     assert.contains("kong.dd3.latency:%d+|g|#T2:V2:V3,T4", gauges, true)
-  end)
-
-  it("logs status in tags with status_count_in_tags flag#only", function()
-    local thread = threads.new({
-      function()
-        local socket = require "socket"
-        local server = assert(socket.udp())
-        server:settimeout(1)
-        server:setoption("reuseaddr", true)
-        server:setsockname("127.0.0.1", 9999)
-        local gauges = {}
-        for _ = 1, 4 do
-          gauges[#gauges+1] = server:receive()
-        end
-        server:close()
-        return gauges
-      end
-    })
-    thread:start()
-    ngx.sleep(0.1)
-
-    local res = assert(client:send {
-      method = "GET",
-      path = "/status/200",
-      headers = {
-        ["Host"] = "datadog5.com"
-      }
-    })
-    assert.res_status(200, res)
-
-    local ok, gauges = thread:join()
-    ngx.sleep(1)
-    assert.True(ok)
-    assert.contains("kong.dd5.request.status:1|c|#T1:V1,status:200", gauges)
-    assert.contains("kong.dd5.request.status.total:1|c|#T1:V1", gauges)
   end)
 
   it("should not return a runtime error (regression)", function()
