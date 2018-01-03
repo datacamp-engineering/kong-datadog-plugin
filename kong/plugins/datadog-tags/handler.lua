@@ -1,6 +1,7 @@
 local BasePlugin       = require "kong.plugins.base_plugin"
 local basic_serializer = require "kong.plugins.log-serializers.basic"
 local statsd_logger    = require "kong.plugins.datadog.statsd_logger"
+local tablex           = require "pl.tablex"
 
 
 local ngx_log       = ngx.log
@@ -103,7 +104,6 @@ local metrics = {
   end,
 }
 
-
 local function log(premature, conf, message)
   if premature then
     return
@@ -160,9 +160,19 @@ local function log(premature, conf, message)
   logger:close_socket()
 end
 
+function get_env_var(key)
+  local env_name = "KONG_" .. string.upper(key)
+  return os.getenv(env_name)
+end
 
 function DatadogHandler:new()
   DatadogHandler.super.new(self, "datadog-tags")
+  -- Environment variables are not available later (nginx clears env vars for the worker processes)
+  self.env_overrides = {
+    host       = get_env_var("dd_agent_host"),
+    port       = get_env_var("dd_agent_port"),
+    prefix     = get_env_var("dd_prefix")
+  }
 end
 
 function DatadogHandler:log(conf)
@@ -175,7 +185,10 @@ function DatadogHandler:log(conf)
 
   local message = basic_serializer.serialize(ngx)
 
-  local ok, err = ngx_timer_at(0, log, conf, message)
+  local perform_union = true
+  local conf_with_overrides = tablex.merge(conf, self.env_overrides, perform_union)
+
+  local ok, err = ngx_timer_at(0, log, conf_with_overrides, message)
   if not ok then
     ngx_log(NGX_ERR, "failed to create timer: ", err)
   end
