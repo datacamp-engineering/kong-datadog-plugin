@@ -58,15 +58,15 @@ local function increment_status(fmt, status, tags, sample_rate, logger)
 end
 
 local metrics = {
-  status_count = function (message, metric_config, logger)
+  status_count = function (message, tags, metric_config, logger)
     local fmt = "request.status"
-    increment_status(fmt, message.response.status, metric_config.tags, metric_config.sample_rate, logger)
+    increment_status(fmt, message.response.status, tags, metric_config.sample_rate, logger)
 
     logger:send_statsd(string_format("%s.%s", fmt, "total"), 1,
                        logger.stat_types.counter,
-                       metric_config.sample_rate, metric_config.tags)
+                       metric_config.sample_rate, tags)
   end,
-  unique_users = function (message, metric_config, logger)
+  unique_users = function (message, tags, metric_config, logger)
     local get_consumer_id = get_consumer_id[metric_config.consumer_identifier]
     local consumer_id     = get_consumer_id(message.consumer)
 
@@ -74,10 +74,10 @@ local metrics = {
       local stat = "user.uniques"
 
       logger:send_statsd(stat, consumer_id, logger.stat_types.set,
-                         nil, metric_config.tags)
+                         nil, tags)
     end
   end,
-  request_per_user = function (message, metric_config, logger)
+  request_per_user = function (message, tags, metric_config, logger)
     local get_consumer_id = get_consumer_id[metric_config.consumer_identifier]
     local consumer_id     = get_consumer_id(message.consumer)
 
@@ -85,21 +85,21 @@ local metrics = {
       local stat = string_format("user.%s.request.count", consumer_id)
 
       logger:send_statsd(stat, 1, logger.stat_types.counter,
-                         metric_config.sample_rate, metric_config.tags)
+                         metric_config.sample_rate, tags)
     end
   end,
-  status_count_per_user = function (message, metric_config, logger)
+  status_count_per_user = function (message, tags, metric_config, logger)
     local get_consumer_id = get_consumer_id[metric_config.consumer_identifier]
     local consumer_id     = get_consumer_id(message.consumer)
 
     if consumer_id then
       local fmt = string_format("user.%s.request.status", consumer_id)
 
-      increment_status(fmt, message.response.status, metric_config.tags, metric_config.sample_rate, logger)
+      increment_status(fmt, message.response.status, tags, metric_config.sample_rate, logger)
 
       logger:send_statsd(string_format("%s.%s", fmt,  "total"),
                          1, logger.stat_types.counter,
-                         metric_config.sample_rate, metric_config.tags)
+                         metric_config.sample_rate, tags)
     end
   end,
 }
@@ -142,10 +142,10 @@ local function log(premature, conf, message)
 
   for _, metric_config in pairs(conf.metrics) do
     local metric = metrics[metric_config.name]
-    metric_config.tags = safe_merge(metric_config.tags, request_tags)
+    local tags = safe_merge(metric_config.tags, request_tags)
 
     if metric then
-      metric(message, metric_config, logger)
+      metric(message, tags, metric_config, logger)
 
     else
       local stat_name  = stat_name[metric_config.name]
@@ -153,7 +153,7 @@ local function log(premature, conf, message)
 
       logger:send_statsd(stat_name, stat_value,
                          logger.stat_types[metric_config.stat_type],
-                         metric_config.sample_rate, metric_config.tags)
+                         metric_config.sample_rate, tags)
     end
   end
 
