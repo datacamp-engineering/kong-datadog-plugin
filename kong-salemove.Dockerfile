@@ -1,6 +1,6 @@
 FROM kong:0.11-alpine
 
-RUN RUN apk add --no-cache tini \
+RUN apk add --no-cache tini \
   && luarocks install kong-plugin-datadog-tags 0.2.3
 
 ENTRYPOINT ["/sbin/tini", "--", "/docker-entrypoint.sh"]
