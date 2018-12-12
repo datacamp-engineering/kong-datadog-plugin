@@ -13,21 +13,24 @@ function _M.serialize(ngx)
     }
   end
 
+  local request_uri = ngx.var.request_uri or ""
+
   return {
     request = {
-      uri = ngx.var.request_uri,
-      request_uri = ngx.var.scheme .. "://" .. ngx.var.host .. ":" .. ngx.var.server_port .. ngx.var.request_uri,
+      uri = request_uri,
+      url = ngx.var.scheme .. "://" .. ngx.var.host .. ":" .. ngx.var.server_port .. request_uri,
       querystring = ngx.req.get_uri_args(), -- parameters, as a table
       method = ngx.req.get_method(), -- http method
       headers = ngx.req.get_headers(),
       size = ngx.var.request_length
     },
+    upstream_uri = ngx.var.upstream_uri,
     response = {
       status = ngx.status,
       headers = ngx.resp.get_headers(),
       size = ngx.var.bytes_sent
     },
-    tries = (ngx.ctx.balancer_address or EMPTY).tries,
+    tries = (ngx.ctx.balancer_data or EMPTY).tries,
     latencies = {
       kong = (ngx.ctx.KONG_ACCESS_TIME or 0) +
              (ngx.ctx.KONG_RECEIVE_TIME or 0) +
@@ -37,6 +40,8 @@ function _M.serialize(ngx)
       request = ngx.var.request_time * 1000
     },
     authenticated_entity = authenticated_entity,
+    route = ngx.ctx.route,
+    service = ngx.ctx.service,
     api = ngx.ctx.api,
     consumer = ngx.ctx.authenticated_consumer,
     client_ip = ngx.var.remote_addr,
