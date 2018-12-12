@@ -132,11 +132,11 @@ local function log(premature, conf, message)
     return
   end
 
-  local request_tags = {string_format("%s:%s", "api_name", message.api.name)}
-  if message.api.uris ~= nil then
+  local request_tags = {string_format("%s:%s", "service_name", message.service.name)}
+  if message.route.paths ~= nil then
     request_tags = append(
       request_tags,
-      string_format("%s:%s", "api_uris", table.concat(message.api.uris, ","))
+      string_format("%s:%s", "route_paths", table.concat(message.route.paths, ","))
     )
   end
 
