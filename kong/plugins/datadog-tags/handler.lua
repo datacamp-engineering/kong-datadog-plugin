@@ -51,7 +51,8 @@ local function append(table_or_nil, new_element)
 end
 
 local function increment_status(fmt, status, tags, sample_rate, logger)
-  local tags = append(tags, string_format("%s:%sxx", "status", status // 100))
+  local divided_status = status / 100
+  local tags = append(tags, string_format("%s:%ixx", "status", divided_status))
   logger:send_statsd(
     fmt, 1, logger.stat_types.counter, sample_rate, tags
   )
