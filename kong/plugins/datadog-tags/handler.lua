@@ -134,7 +134,7 @@ local function log(premature, conf, message)
   end
 
   local request_tags = {string_format("%s:%s", "service_name", message.service.name)}
-  if message.route.paths ~= nil then
+  if type(message.route.paths) == "table" then
     request_tags = append(
       request_tags,
       string_format("%s:%s", "route_paths", table.concat(message.route.paths, ","))
