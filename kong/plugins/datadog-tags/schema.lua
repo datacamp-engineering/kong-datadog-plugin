@@ -58,19 +58,6 @@ local default_metrics = {
     tags      = {"app:kong"}
   },
   {
-    name                = "unique_users",
-    stat_type           = "set",
-    consumer_identifier = "custom_id",
-    tags                = {"app:kong"}
-  },
-  {
-    name                = "request_per_user",
-    stat_type           = "counter",
-    sample_rate         = 1,
-    consumer_identifier = "custom_id",
-    tags                = {"app:kong"}
-  },
-  {
     name      = "upstream_latency",
     stat_type = "timer",
     tags      = {"app:kong"}
@@ -79,13 +66,6 @@ local default_metrics = {
     name      = "kong_latency",
     stat_type = "timer",
     tags      = {"app:kong"}
-  },
-  {
-    name                = "status_count_per_user",
-    stat_type           = "counter",
-    sample_rate         = 1,
-    consumer_identifier = "custom_id",
-    tags                = {"app:kong"}
   }
 }
 
