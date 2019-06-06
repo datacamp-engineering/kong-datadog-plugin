@@ -139,6 +139,11 @@ local function log(premature, conf, message)
       request_tags,
       string_format("%s:%s", "route_paths", table.concat(message.route.paths, ","))
     )
+  else
+    request_tags = append(
+      request_tags,
+      string_format("%s:%s", "route_paths", "/")
+    )
   end
 
   for _, metric_config in pairs(conf.metrics) do
