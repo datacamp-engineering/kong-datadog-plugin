@@ -28,7 +28,7 @@ local CONSUMER_IDENTIFIERS = {
   "username",
 }
 
-local default_metrics = {
+local DEFAULT_METRICS = {
   {
     name        = "request_count",
     stat_type   = "counter",
@@ -72,12 +72,13 @@ local default_metrics = {
 return {
   name = "datadog-tags",
   fields = {
+    { protocols = typedefs.protocols_http },
     { config = {
         type = "record",
         default = { metrics = DEFAULT_METRICS },
         fields = {
-          { host = typedefs.host({ default = "localhost" }), },
-          { port = typedefs.port({ default = 8125 }), },
+          { host = typedefs.host({ required = true, default = "localhost" }), },
+          { port = typedefs.port({ required = true, default = 8125 }), },
           { prefix = { type = "string", default = "kong" }, },
           { metrics = {
               type     = "array",
