@@ -76,8 +76,8 @@ return {
         type = "record",
         default = { metrics = DEFAULT_METRICS },
         fields = {
-          { host = typedefs.host({ required = true, default = "localhost" }), },
-          { port = typedefs.port({ required = true, default = 8125 }), },
+          { host = typedefs.host({ default = "localhost" }), },
+          { port = typedefs.port({ default = 8125 }), },
           { prefix = { type = "string", default = "kong" }, },
           { metrics = {
               type     = "array",
