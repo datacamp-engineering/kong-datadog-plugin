@@ -70,7 +70,7 @@ local default_metrics = {
 
 
 return {
-  name = "datadog-tags"
+  name = "datadog-tags",
   fields = {
     { config = {
         type = "record",
@@ -118,12 +118,5 @@ return {
                     then_field = "stat_type",
                     then_match = { eq = "counter" },
                   }, },
-                }, 
-              }, 
-            }, 
-          }, 
-        }, 
-      }, 
-    },
-  }
+  }, }, }, }, }, }, }, },
 }
