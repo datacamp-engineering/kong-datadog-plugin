@@ -174,7 +174,7 @@ end
 function DatadogHandler:new()
   DatadogHandler.super.new(self, "datadog-tags")
   -- Environment variables are not available later (nginx clears env vars for the worker processes)
-  kong.log.notice(get_env_var("dd_prefix"))
+  
   self.env_overrides = {
     host       = get_env_var("dd_agent_host"),
     port       = get_env_var("dd_agent_port"),
@@ -195,6 +195,7 @@ function DatadogHandler:log(conf)
   local perform_union = true
   local conf_with_overrides = tablex.merge(conf, self.env_overrides, perform_union)
 
+  kong.log.notice(conf_with_overrides.prefix)
   local ok, err = ngx_timer_at(0, log, conf_with_overrides, message)
   if not ok then
     ngx_log(NGX_ERR, "failed to create timer: ", err)
