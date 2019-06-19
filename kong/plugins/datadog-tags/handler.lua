@@ -174,6 +174,7 @@ end
 function DatadogHandler:new()
   DatadogHandler.super.new(self, "datadog-tags")
   -- Environment variables are not available later (nginx clears env vars for the worker processes)
+  kong.log.notice(get_env_var("dd_prefix"))
   self.env_overrides = {
     host       = get_env_var("dd_agent_host"),
     port       = get_env_var("dd_agent_port"),
