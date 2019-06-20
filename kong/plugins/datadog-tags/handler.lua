@@ -184,9 +184,10 @@ end
 
 function DatadogHandler:log(conf)
   DatadogHandler.super.log(self)
+  
+  kong.log.notice(conf_with_overrides.prefix)
 
-  -- unmatched apis are nil
-  if not ngx.ctx.api then
+  if not ngx.ctx.service then
     return
   end
 
@@ -195,7 +196,6 @@ function DatadogHandler:log(conf)
   local perform_union = true
   local conf_with_overrides = tablex.merge(conf, self.env_overrides, perform_union)
 
-  kong.log.notice(conf_with_overrides.prefix)
   local ok, err = ngx_timer_at(0, log, conf_with_overrides, message)
   if not ok then
     ngx_log(NGX_ERR, "failed to create timer: ", err)
