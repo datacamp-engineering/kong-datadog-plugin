@@ -109,7 +109,7 @@ local function log(premature, conf, message)
   if premature then
     return
   end
-
+  kong.log.notice("logging from datadog tags", conf.prefix)
   local stat_name  = {
     request_size     = "request.size",
     response_size    = "response.size",
