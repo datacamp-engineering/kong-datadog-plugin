@@ -185,6 +185,8 @@ end
 function DatadogHandler:log(conf)
   DatadogHandler.super.log(self)
   
+  local perform_union = true
+  local conf_with_overrides = tablex.merge(conf, self.env_overrides, perform_union)
   kong.log.notice(conf_with_overrides.prefix)
 
   if not ngx.ctx.service then
@@ -193,8 +195,6 @@ function DatadogHandler:log(conf)
 
   local message = basic_serializer.serialize(ngx)
 
-  local perform_union = true
-  local conf_with_overrides = tablex.merge(conf, self.env_overrides, perform_union)
 
   local ok, err = ngx_timer_at(0, log, conf_with_overrides, message)
   if not ok then
