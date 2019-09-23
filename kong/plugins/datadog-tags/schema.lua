@@ -11,6 +11,7 @@ local STAT_NAMES = {
   "status_count_per_user",
   "unique_users",
   "upstream_latency",
+  "distribution_latency",
 }
 
 local STAT_TYPES = {
@@ -20,6 +21,7 @@ local STAT_TYPES = {
   "meter",
   "set",
   "timer",
+  "distribution",
 }
 
 local CONSUMER_IDENTIFIERS = {
@@ -65,6 +67,12 @@ local DEFAULT_METRICS = {
     name      = "kong_latency",
     stat_type = "timer",
     tags      = {"app:kong"}
+  },
+  {
+    name      = "distribution_latency",
+    stat_type = "distribution",
+    tags      = {"app:kong"},
+    sample_rate = 1
   }
 }
 

@@ -15,6 +15,7 @@ local stat_types = {
   histogram = "h",
   meter     = "m",
   set       = "s",
+  distribution = "d",
 }
 
 local statsd_mt = {}
