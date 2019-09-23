@@ -137,9 +137,12 @@ local function log(premature, conf, message)
 
   local request_tags = {string_format("%s:%s", "service_name", message.service.name)}
   if type(message.route.paths) == "table" then
+    local tag = table.concat(message.route.paths, "-") 
+    tag = tag:gsub("|", "!")
+    tag = tag:sub(0, 15)
     request_tags = append(
       request_tags,
-      string_format("%s:%s", "route_paths", table.concat(message.route.paths, ","))
+      string_format("%s:%s", "route_paths", tag)
     )
   else
     request_tags = append(
