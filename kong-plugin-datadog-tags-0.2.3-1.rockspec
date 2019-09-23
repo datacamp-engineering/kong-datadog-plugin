@@ -30,5 +30,6 @@ build = {
   modules = {
     ["kong.plugins."..pluginName..".handler"] = "kong/plugins/"..pluginName.."/handler.lua",
     ["kong.plugins."..pluginName..".schema"] = "kong/plugins/"..pluginName.."/schema.lua",
+    ["kong.plugins."..pluginName..".statsd_logger"] = "kong/plugins/"..pluginName.."/statsd_logger.lua",
   }
 }
