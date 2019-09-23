@@ -1,6 +1,6 @@
 local BasePlugin       = require "kong.plugins.base_plugin"
 local basic_serializer = require "kong.plugins.log-serializers.basic"
-local statsd_logger    = require "kong.plugins.datadog.statsd_logger"
+local statsd_logger    = require "kong.plugins.datadog-tags.statsd_logger"
 local tablex           = require "pl.tablex"
 
 
